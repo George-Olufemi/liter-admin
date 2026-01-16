@@ -1,65 +1,113 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import { CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
+import { Label } from "@/components/ui/label";
+import { Eye, EyeOff } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { login } from "@/services/auth/authentication";
+import { useAuthStore } from "@/store/useAuthStore";
+import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
+import Link from "next/link";
+
+export default function Login() {
+  const router = useRouter();
+  const setAuth = useAuthStore((state) => state.setAuth);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: login,
+    onSuccess: (data) => {
+      setAuth(data.user, data.token);
+
+      toast.success("Login successful!");
+
+      setTimeout(() => {
+        router.push("/dashboard/overview");
+      }, 1500);
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Login failed");
+    },
+  });
+
+  const handleLogin = () => {
+    mutate({ email, password });
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-[#F9FAFB]">
+      <div className="mb-18">
         <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
+          src="/liteR.svg"
+          alt="LiteR Logo"
+          width={117.16}
+          height={49.93}
           priority
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      </div>
+
+      <div className="w-full max-w-124.75 bg-white rounded-md">
+        <CardContent className="p-6 space-y-6">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Welcome back!</h2>
+          </div>
+
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label>Email Address</Label>
+              <Input
+                type="email"
+                placeholder="Enter your email address"
+                className="h-12.5"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label>Password</Label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  className="h-12.5 pr-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+            <Link href="/forgotpassword">
+              <p className="text-sm font-medium text-right text-[#333] cursor-pointer">
+                Forgot Password?
+              </p>
+            </Link>
+          </div>
+
+          <Button
+            onClick={handleLogin}
+            disabled={isPending}
+            className="w-full py-6"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            {isPending ? <Spinner /> : "Continue"}
+          </Button>
+        </CardContent>
+      </div>
     </div>
   );
 }
