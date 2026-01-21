@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -11,10 +10,23 @@ import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import { forgotPassword } from "@/services/auth/authentication";
 import { useMutation } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ForgotPasswordInputs, ForgotPasswordSchema } from "@/lib/schemas/auth";
 
 export default function ForgotPassword() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ForgotPasswordInputs>({
+    resolver: zodResolver(ForgotPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
 
   const { mutate, isPending } = useMutation({
     mutationFn: forgotPassword,
@@ -22,7 +34,7 @@ export default function ForgotPassword() {
       console.log(data);
       toast.success("Password reset instructions sent to your email!");
       setTimeout(() => {
-        router.push("/auth/register/verifyotp");
+        router.push("/verifyotp");
       }, 1500);
     },
     onError: (error: any) => {
@@ -30,8 +42,8 @@ export default function ForgotPassword() {
     },
   });
 
-  const handleForgotPassword = () => {
-    mutate({ email });
+  const onSubmit = (data: ForgotPasswordInputs) => {
+    mutate(data);
   };
 
   return (
@@ -53,18 +65,24 @@ export default function ForgotPassword() {
             <p>Enter the email address associated with your account</p>
           </div>
 
-          <div className="space-y-3">
-            <Label htmlFor="email">Email Address</Label>
-            <Input
-              type="text"
-              placeholder="Enter your email address"
-              className="h-12.5"
-            />
-          </div>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                type="text"
+                placeholder="Enter your email address"
+                className="h-12.5"
+                {...register("email")}
+              />
+              {errors.email && (
+                <p className="text-red-500 text-sm">{errors.email.message}</p>
+              )}
+            </div>
 
-          <Button onClick={handleForgotPassword} className="w-full py-6">
-            {isPending ? <Spinner /> : "Continue"}
-          </Button>
+            <Button type="submit" className="w-full py-6">
+              {isPending ? <Spinner /> : "Continue"}
+            </Button>
+          </form>
         </CardContent>
       </div>
     </div>

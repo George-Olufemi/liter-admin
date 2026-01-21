@@ -42,7 +42,7 @@ privateApi.interceptors.response.use(
       sessionStorage.removeItem("auth-session");
 
       if (typeof window !== "undefined") {
-        window.location.href = "/auth/login";
+        window.location.href = "/";
       }
     }
 

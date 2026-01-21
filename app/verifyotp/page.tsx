@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -14,10 +13,23 @@ import { useMutation } from "@tanstack/react-query";
 import { otpVerification } from "@/services/auth/authentication";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { OtpInputs, OtpSchema } from "@/lib/schemas/auth";
 
 export default function VerifyOtp() {
   const router = useRouter();
-  const [otp, setOtp] = useState("");
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<OtpInputs>({
+    resolver: zodResolver(OtpSchema),
+    defaultValues: {
+      otp: "",
+    },
+  });
 
   const { mutate, isPending } = useMutation({
     mutationFn: otpVerification,
@@ -32,8 +44,8 @@ export default function VerifyOtp() {
     },
   });
 
-  const handleVerify = () => {
-    mutate(otp);
+  const onSubmit = (data: OtpInputs) => {
+    mutate(data.otp);
   };
 
   return (
@@ -63,42 +75,53 @@ export default function VerifyOtp() {
               </p>
             </div>
 
-            {/* OTP Input */}
-            <div className="flex justify-center">
-              <InputOTP maxLength={6} value={otp} onChange={setOtp}>
-                <InputOTPGroup className="gap-2 sm:gap-3">
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <InputOTPSlot
-                      key={i}
-                      index={i}
-                      className="w-10 h-12 sm:w-12 sm:h-14 text-lg"
-                    />
-                  ))}
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              {/* OTP Input */}
+              <div className="flex flex-col items-center space-y-2">
+                <Controller
+                  name="otp"
+                  control={control}
+                  render={({ field }) => (
+                    <InputOTP maxLength={6} {...field}>
+                      <InputOTPGroup className="gap-2 sm:gap-3">
+                        {[0, 1, 2, 3, 4, 5].map((i) => (
+                          <InputOTPSlot
+                            key={i}
+                            index={i}
+                            className="w-10 h-12 sm:w-12 sm:h-14 text-lg"
+                          />
+                        ))}
+                      </InputOTPGroup>
+                    </InputOTP>
+                  )}
+                />
+                {errors.otp && (
+                  <p className="text-red-500 text-sm">{errors.otp.message}</p>
+                )}
+              </div>
 
-            {/* Resend + Timer */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs sm:text-sm">
-              <p className="text-gray-600 dark:text-gray-400">
-                Didn’t get the code?{" "}
-                <span className="font-semibold text-[#213B66] dark:text-[#72D389] cursor-pointer hover:underline">
-                  Resend
-                </span>
-              </p>
-              <p className="font-semibold text-[#213B66] dark:text-[#72D389]">
-                30s
-              </p>
-            </div>
+              {/* Resend + Timer */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs sm:text-sm">
+                <p className="text-gray-600 dark:text-gray-400">
+                  Didn’t get the code?{" "}
+                  <span className="font-semibold text-[#213B66] dark:text-[#72D389] cursor-pointer hover:underline">
+                    Resend
+                  </span>
+                </p>
+                <p className="font-semibold text-[#213B66] dark:text-[#72D389]">
+                  30s
+                </p>
+              </div>
 
-            {/* Verify Button */}
-            <Button
-              onClick={handleVerify}
-              className="w-full py-6 text-base"
-              disabled={isPending || otp.length !== 6}
-            >
-              {isPending ? <Spinner /> : "Verify"}
-            </Button>
+              {/* Verify Button */}
+              <Button
+                type="submit"
+                className="w-full py-6 text-base"
+                disabled={isPending}
+              >
+                {isPending ? <Spinner /> : "Verify"}
+              </Button>
+            </form>
           </CardContent>
         </div>
       </div>

@@ -14,14 +14,26 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { LoginExternalInputs, LoginSchema } from "@/lib/schemas/auth";
 
 export default function Login() {
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginExternalInputs>({
+    resolver: zodResolver(LoginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
   const { mutate, isPending } = useMutation({
     mutationFn: login,
@@ -39,8 +51,8 @@ export default function Login() {
     },
   });
 
-  const handleLogin = () => {
-    mutate({ email, password });
+  const onSubmit = (data: LoginExternalInputs) => {
+    mutate(data);
   };
 
   return (
@@ -61,16 +73,18 @@ export default function Login() {
             <h2 className="text-lg font-semibold">Welcome back!</h2>
           </div>
 
-          <div className="space-y-3">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
             <div className="space-y-1">
               <Label>Email Address</Label>
               <Input
                 type="email"
                 placeholder="Enter your email address"
                 className="h-12.5"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                {...register("email")}
               />
+              {errors.email && (
+                <p className="text-red-500 text-sm">{errors.email.message}</p>
+              )}
             </div>
 
             <div className="space-y-1">
@@ -80,8 +94,7 @@ export default function Login() {
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   className="h-12.5 pr-10"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  {...register("password")}
                 />
                 <button
                   type="button"
@@ -91,21 +104,26 @@ export default function Login() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-red-500 text-sm">{errors.password.message}</p>
+              )}
             </div>
-            <Link href="/forgotpassword">
-              <p className="text-sm font-medium text-right text-[#333] cursor-pointer">
-                Forgot Password?
-              </p>
-            </Link>
-          </div>
+            <div className="flex justify-end">
+              <Link href="/forgotpassword">
+                <p className="text-sm font-medium text-[#333] cursor-pointer">
+                  Forgot Password?
+                </p>
+              </Link>
+            </div>
 
-          <Button
-            onClick={handleLogin}
-            disabled={isPending}
-            className="w-full py-6"
-          >
-            {isPending ? <Spinner /> : "Continue"}
-          </Button>
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="w-full py-6 mt-6"
+            >
+              {isPending ? <Spinner /> : "Continue"}
+            </Button>
+          </form>
         </CardContent>
       </div>
     </div>
